@@ -1,0 +1,9 @@
+2022-10-07 11:41:14,455 [INFO] Activator:177 - 
+
+
+2022-10-07 11:41:14,457 [INFO] Activator:178 - !SESSION log4j initialized
+2022-10-07 11:41:39,042 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+2022-10-07 11:41:39,043 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] SLF4J: Defaulting to no-operation (NOP) logger implementation
+2022-10-07 11:41:39,044 [ERROR] LogOutputStream:74 - [STDERR_REDIRECT] SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+2022-10-07 11:43:48,915 [ERROR] ApiDbMcu:1619 - Can't use Application install path:
+2022-10-07 11:43:53,566 [WARN] RulesReader:63 - Compatibility file://mcu/compatibility.xml not found
