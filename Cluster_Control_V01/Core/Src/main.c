@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#define data_length 100
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -46,15 +46,15 @@ UART_HandleTypeDef huart3;
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
-uint8_t UART_RX_data[data_length];
-uint8_t UART_RX_data_word[8];
-uint8_t UART_RX_temp[8];
-uint8_t UART_TX_data = 0;
+char UART_RX_data[data_length];
+char UART_RX_data_word[8];
+char UART_RX_temp[8];
+char UART_TX_data = 0;
 char uart_flag = 0;
 char data_flag = 0;
 char uart_cnt = 0;
 int cnt = 0;
-uint8_t received = '\0';
+char received = '\0';
 HAL_StatusTypeDef rcvStat;
 
 /* USER CODE END PV */
@@ -80,9 +80,9 @@ int __io_putchar(int ch)
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -111,7 +111,7 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart3, &UART_RX_data, 1);
+  //HAL_UART_Receive_IT(&huart3, &UART_RX_data, 1);
 
   printf("\r\n----------------------------------------------------------------- \r\n");
   printf("Version 2022, 10, 06 Cluster Control Board Ver 0.0.3 \r\n");
@@ -119,7 +119,9 @@ int main(void)
   printf("0.0.2 Labview Communication Test Checked Labview TX\r\n");
   printf("0.0.3 Labview Communication Test Checked Data Parsing Test \r\n");
   printf("0.0.4 Git Test  \r\n");
-  printf("0.0.5 Labview Communication Test ARM Parsing Test \r\n");
+  printf("0.0.5 Labview Communication Test Labview Parsing Test \r\n");
+  printf("0.0.6 Labview Communication Test ARM Parsing Test \r\n");
+  printf("0.0.7 ARM Protocol Ver 0.1 \r\n");
   printf("----------------------------------------------------------------- \r\n");
 
   /* USER CODE END 2 */
@@ -134,83 +136,67 @@ int main(void)
     // printf("%s\r\n", &UART_RX_data);
 
     rcvStat = HAL_UART_Receive(&huart3, UART_RX_data, data_length, 10);
-    if (rcvStat == HAL_OK)
+
+    for (int n = 0; n < data_length; n++)
     {
-      for (int n = 0; n < data_length; n++)
+      if (UART_RX_data[n] == '+')
       {
-        if (UART_RX_data[n] == '+')
+        // printf("Find Start %d \r\n", n);
+        if ((UART_RX_data[n + 7]) == '#')
         {
-          // printf("Find Start %d \r\n", n);
-          if ((UART_RX_data[n + 7]) == '#')
-          {
-            // printf("Find end");
-            uart_cnt = n;
-            break;
-          }
+          // printf("Find end");
+          uart_cnt = n;
+          break;
         }
       }
-      for (int m = 0; m < 8; m++)
-      {
-        // printf("%c",UART_RX_data[uart_cnt+m]);
-        UART_RX_temp[m] = UART_RX_data[uart_cnt + m];
-      }
-      printf("\r\n");
     }
-    // for (int n = 0; n < 20; n++)
-    // {
-    //   printf("UART_RX_data[%d] : %c \r\n", n, UART_RX_data[n]);
-    // }
-    // if (uart_flag == 1)
-    // {
-    //   printf("flag  OK \r\n");
-    //   uart_flag = 0;
-    //   HAL_UART_Transmit(&huart3, &UART_RX_data, 100, 1000);
-    //   for (int n = 0; n < data_length; n++)
-    //   {
-    //     if (UART_RX_data[n] == '+')
-    //     {
-    //       printf("+ OK \r\n");
-    //       if ((n + 7) < data_length)
-    //       {
-    //         if (UART_RX_data[n + 7] == '#')
-    //         {
-    //           printf(" # OK \r\n");
-    //           for (int a = 0; a < 8; a++)
-    //           {
-    //             UART_RX_data_word[a] = UART_RX_data[n + a];
-    //             printf("%c", UART_RX_data_word[a]);
-    //           }
-    //           printf("\r\n");
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
-  }
-  /* USER CODE END WHILE */
+    for (int m = 0; m < 8; m++)
+    {
+      printf("%c", UART_RX_data[uart_cnt + m]);
+      UART_RX_temp[m] = UART_RX_data[uart_cnt + m];
+    }
+    printf("\r\n");
+    printf("Last Test ");
+    for (int k = 0; k < 8; k++)
+    {
+      printf("%d : %c \r\n", k, UART_RX_temp[k]);
+    }
+    printf("\r\n");
 
-  /* USER CODE BEGIN 3 */
+    // Protocol 
+    // 1 : +, Start alphabet 
+    // 2 : Cluster Number  1 or 2
+    // 3 : Only T 
+    // 4 : TX MUX SEL , 0 ~ W (No 33 , 0 is Notting)
+    // 5 : Only R
+    // 6 : RX MUX ADDR , 0 ~ F (No 16, )
+    // 7 : RX MUX SEL
+    // 8 : #, End alphabet
+  }
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
 
   /* USER CODE END 3 */
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-   */
+  */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
+  * in the RCC_OscInitTypeDef structure.
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -225,8 +211,9 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -239,10 +226,10 @@ void SystemClock_Config(void)
 }
 
 /**
- * @brief SPI1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_SPI1_Init(void)
 {
 
@@ -273,13 +260,14 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
 }
 
 /**
- * @brief USART3 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USART3_UART_Init(void)
 {
 
@@ -305,13 +293,14 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
+
 }
 
 /**
- * @brief USB_OTG_FS Initialization Function
- * @param None
- * @retval None
- */
+  * @brief USB_OTG_FS Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USB_OTG_FS_PCD_Init(void)
 {
 
@@ -339,13 +328,14 @@ static void MX_USB_OTG_FS_PCD_Init(void)
   /* USER CODE BEGIN USB_OTG_FS_Init 2 */
 
   /* USER CODE END USB_OTG_FS_Init 2 */
+
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -361,31 +351,41 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, TX_MUX_SEL_2_Pin|TX_MUX_SEL_3_Pin|TX_MUX_SEL_4_Pin|TX_MUX_SEL_5_Pin
+                          |TX_MUX_SEL_6_Pin|TX_MUX_SEL_7_Pin|TX_MUX_SEL_8_Pin|TX_MUX_SEL_9_Pin
+                          |TX_MUX_SEL_10_Pin|TX_MUX_SEL_11_Pin|TX_MUX_SEL_12_Pin|TX_MUX_SEL_13_Pin
+                          |TX_MUX_SEL_14_Pin|TX_MUX_SEL_15_Pin|TX_MUX_SEL_0_Pin|TX_MUX_SEL_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, TX_MUX_SEL_16_Pin|TX_MUX_SEL_17_Pin|TX_MUX_SEL_18_Pin|TX_MUX_SEL_19_Pin
+                          |TX_MUX_SEL_20_Pin|TX_MUX_SEL_21_Pin|TX_MUX_SEL_22_Pin|TX_MUX_SEL_23_Pin
+                          |TX_MUX_SEL_24_Pin|TX_MUX_SEL_25_Pin|TX_MUX_SEL_26_Pin|TX_MUX_SEL_27_Pin
+                          |TX_MUX_SEL_28_Pin|TX_MUX_SEL_29_Pin|TX_MUX_SEL_30_Pin|TX_MUX_SEL_31_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, RX_ADDR_0_Pin|RX_ADDR_1_Pin|RX_ADDR_2_Pin|RX_ADDR_3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1 | GPIO_PIN_2, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, RX_EN_0_Pin|RX_EN_1_Pin|GPIO_PIN_2, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD1_Pin | GPIO_PIN_10 | GPIO_PIN_11 | LD3_Pin | LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin|GPIO_PIN_10|GPIO_PIN_11|LD3_Pin
+                          |LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, GPIO_PIN_0 | GPIO_PIN_1 | USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, CSA_Pin|CSB_Pin|USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, WR_0_Pin|WR_1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PE2 PE3 PE4 PE5
-                           PE6 PE7 PE8 PE9
-                           PE10 PE11 PE12 PE13
-                           PE14 PE15 PE0 PE1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_0 | GPIO_PIN_1;
+  /*Configure GPIO pins : TX_MUX_SEL_2_Pin TX_MUX_SEL_3_Pin TX_MUX_SEL_4_Pin TX_MUX_SEL_5_Pin
+                           TX_MUX_SEL_6_Pin TX_MUX_SEL_7_Pin TX_MUX_SEL_8_Pin TX_MUX_SEL_9_Pin
+                           TX_MUX_SEL_10_Pin TX_MUX_SEL_11_Pin TX_MUX_SEL_12_Pin TX_MUX_SEL_13_Pin
+                           TX_MUX_SEL_14_Pin TX_MUX_SEL_15_Pin TX_MUX_SEL_0_Pin TX_MUX_SEL_1_Pin */
+  GPIO_InitStruct.Pin = TX_MUX_SEL_2_Pin|TX_MUX_SEL_3_Pin|TX_MUX_SEL_4_Pin|TX_MUX_SEL_5_Pin
+                          |TX_MUX_SEL_6_Pin|TX_MUX_SEL_7_Pin|TX_MUX_SEL_8_Pin|TX_MUX_SEL_9_Pin
+                          |TX_MUX_SEL_10_Pin|TX_MUX_SEL_11_Pin|TX_MUX_SEL_12_Pin|TX_MUX_SEL_13_Pin
+                          |TX_MUX_SEL_14_Pin|TX_MUX_SEL_15_Pin|TX_MUX_SEL_0_Pin|TX_MUX_SEL_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -397,25 +397,28 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PF0 PF1 PF2 PF3
-                           PF4 PF5 PF6 PF7
-                           PF8 PF9 PF10 PF11
-                           PF12 PF13 PF14 PF15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
+  /*Configure GPIO pins : TX_MUX_SEL_16_Pin TX_MUX_SEL_17_Pin TX_MUX_SEL_18_Pin TX_MUX_SEL_19_Pin
+                           TX_MUX_SEL_20_Pin TX_MUX_SEL_21_Pin TX_MUX_SEL_22_Pin TX_MUX_SEL_23_Pin
+                           TX_MUX_SEL_24_Pin TX_MUX_SEL_25_Pin TX_MUX_SEL_26_Pin TX_MUX_SEL_27_Pin
+                           TX_MUX_SEL_28_Pin TX_MUX_SEL_29_Pin TX_MUX_SEL_30_Pin TX_MUX_SEL_31_Pin */
+  GPIO_InitStruct.Pin = TX_MUX_SEL_16_Pin|TX_MUX_SEL_17_Pin|TX_MUX_SEL_18_Pin|TX_MUX_SEL_19_Pin
+                          |TX_MUX_SEL_20_Pin|TX_MUX_SEL_21_Pin|TX_MUX_SEL_22_Pin|TX_MUX_SEL_23_Pin
+                          |TX_MUX_SEL_24_Pin|TX_MUX_SEL_25_Pin|TX_MUX_SEL_26_Pin|TX_MUX_SEL_27_Pin
+                          |TX_MUX_SEL_28_Pin|TX_MUX_SEL_29_Pin|TX_MUX_SEL_30_Pin|TX_MUX_SEL_31_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC0 PC1 PC2 PC3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3;
+  /*Configure GPIO pins : RX_ADDR_0_Pin RX_ADDR_1_Pin RX_ADDR_2_Pin RX_ADDR_3_Pin */
+  GPIO_InitStruct.Pin = RX_ADDR_0_Pin|RX_ADDR_1_Pin|RX_ADDR_2_Pin|RX_ADDR_3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1 | GPIO_PIN_2;
+  /*Configure GPIO pins : RX_EN_0_Pin RX_EN_1_Pin PA2 */
+  GPIO_InitStruct.Pin = RX_EN_0_Pin|RX_EN_1_Pin|GPIO_PIN_2;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -423,14 +426,15 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : LD1_Pin PB10 PB11 LD3_Pin
                            LD2_Pin */
-  GPIO_InitStruct.Pin = LD1_Pin | GPIO_PIN_10 | GPIO_PIN_11 | LD3_Pin | LD2_Pin;
+  GPIO_InitStruct.Pin = LD1_Pin|GPIO_PIN_10|GPIO_PIN_11|LD3_Pin
+                          |LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PG0 PG1 USB_PowerSwitchOn_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | USB_PowerSwitchOn_Pin;
+  /*Configure GPIO pins : CSA_Pin CSB_Pin USB_PowerSwitchOn_Pin */
+  GPIO_InitStruct.Pin = CSA_Pin|CSB_Pin|USB_PowerSwitchOn_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -442,12 +446,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USB_OverCurrent_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD0 PD1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
+  /*Configure GPIO pins : WR_0_Pin WR_1_Pin */
+  GPIO_InitStruct.Pin = WR_0_Pin|WR_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 4 */
@@ -455,7 +460,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart->Instance == USART3)
   {
-    // 데이터 1개를 수신하면 인터럽트를 발생시킨다.
+    // ?��?��?�� 1개�?? ?��?��?���? ?��?��?��?���? 발생?��?��?��.
     // HAL_UART_Receive_IT(&huart3, &UART_RX_data, 1);
     // HAL_UART_Transmit(&huart3, &UART_RX_data, 1, 1000);
     // uart_flag = 1;
@@ -464,9 +469,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -478,14 +483,14 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
+#ifdef  USE_FULL_ASSERT
 /**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
