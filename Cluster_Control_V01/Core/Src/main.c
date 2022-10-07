@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#define data_length 20
+#define data_length 100
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -47,9 +47,15 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 uint8_t UART_RX_data[data_length];
+uint8_t UART_RX_data_word[8];
+uint8_t UART_RX_temp[8];
 uint8_t UART_TX_data = 0;
 char uart_flag = 0;
+char data_flag = 0;
+char uart_cnt = 0;
 int cnt = 0;
+uint8_t received = '\0';
+HAL_StatusTypeDef rcvStat;
 
 /* USER CODE END PV */
 
@@ -105,7 +111,7 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart3, &UART_RX_data, data_length);
+  HAL_UART_Receive_IT(&huart3, &UART_RX_data, 1);
 
   printf("\r\n----------------------------------------------------------------- \r\n");
   printf("Version 2022, 10, 06 Cluster Control Board Ver 0.0.3 \r\n");
@@ -122,31 +128,69 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-    HAL_Delay(1000);
-    printf("code %d end\r\n", cnt++);
-    // printf("Last Input %s \r\n",UART_RX_data);
     HAL_Delay(5);
-    for (int n = 0; n < 20; n++)
-    {
-      printf("UART_RX_data[%d] : %c \r\n", n, UART_RX_data[n]);
-    }
+    // HAL_Delay(1000);
+    // printf("System Count : %d end\r\n", cnt++);
+    // printf("%s\r\n", &UART_RX_data);
 
-    for (int n = 0; n < 20; n++)
+    rcvStat = HAL_UART_Receive(&huart3, UART_RX_data, data_length, 10);
+    if (rcvStat == HAL_OK)
     {
-      if (UART_RX_data[n] == '+')
+      for (int n = 0; n < data_length; n++)
       {
-        if ((n + 7) < 20)
+        if (UART_RX_data[n] == '+')
         {
-          if (UART_RX_data[n + 7] == '#')
-            printf("OK \r\n");
+          // printf("Find Start %d \r\n", n);
+          if ((UART_RX_data[n + 7]) == '#')
+          {
+            // printf("Find end");
+            uart_cnt = n;
+            break;
+          }
         }
       }
+      for (int m = 0; m < 8; m++)
+      {
+        // printf("%c",UART_RX_data[uart_cnt+m]);
+        UART_RX_temp[m] = UART_RX_data[uart_cnt + m];
+      }
+      printf("\r\n");
     }
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+    // for (int n = 0; n < 20; n++)
+    // {
+    //   printf("UART_RX_data[%d] : %c \r\n", n, UART_RX_data[n]);
+    // }
+    // if (uart_flag == 1)
+    // {
+    //   printf("flag  OK \r\n");
+    //   uart_flag = 0;
+    //   HAL_UART_Transmit(&huart3, &UART_RX_data, 100, 1000);
+    //   for (int n = 0; n < data_length; n++)
+    //   {
+    //     if (UART_RX_data[n] == '+')
+    //     {
+    //       printf("+ OK \r\n");
+    //       if ((n + 7) < data_length)
+    //       {
+    //         if (UART_RX_data[n + 7] == '#')
+    //         {
+    //           printf(" # OK \r\n");
+    //           for (int a = 0; a < 8; a++)
+    //           {
+    //             UART_RX_data_word[a] = UART_RX_data[n + a];
+    //             printf("%c", UART_RX_data_word[a]);
+    //           }
+    //           printf("\r\n");
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
   }
+  /* USER CODE END WHILE */
+
+  /* USER CODE BEGIN 3 */
+
   /* USER CODE END 3 */
 }
 
@@ -412,8 +456,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   if (huart->Instance == USART3)
   {
     // 데이터 1개를 수신하면 인터럽트를 발생시킨다.
-    HAL_UART_Receive_IT(&huart3, &UART_RX_data, 1);
-    HAL_UART_Transmit(&huart3, &UART_RX_data, 1, 1000);
+    // HAL_UART_Receive_IT(&huart3, &UART_RX_data, 1);
+    // HAL_UART_Transmit(&huart3, &UART_RX_data, 1, 1000);
+    // uart_flag = 1;
   }
 }
 /* USER CODE END 4 */
