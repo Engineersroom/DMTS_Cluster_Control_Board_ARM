@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "math.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -57,6 +58,10 @@ char uart_cnt = 0;
 int cnt = 0;
 char received = '\0';
 char start_char_flag = 0;
+char TX_SEL = 0;
+char RX_ADDR = 0;
+char RX_SEL = 0;
+
 HAL_StatusTypeDef rcvStat;
 //한글 주석 실험
 /* USER CODE END PV */
@@ -125,6 +130,9 @@ int main(void)
   printf("0.0.6 Labview Communication Test ARM Parsing Test \r\n");
   printf("0.0.7 ARM Protocol Ver 0.1 \r\n");
   printf("0.0.8 Command Added \r\n");
+  printf("0.0.9 Function Added \r\n");
+  printf("0.1.0 Protocal Ver 0.1")
+  /*GPIO Reset Fuction 추가*/
   printf("----------------------------------------------------------------- \r\n");
   HAL_GPIO_WritePin(GPIOE, 0x02, GPIO_PIN_RESET);
   /* USER CODE END 2 */
@@ -150,12 +158,13 @@ int main(void)
         {
           start_char_flag = 1;
           // printf("Find end");
+          // +1TAR13# 에서 + 다음에 오는 문자가 1인지 2인지 판별해야함
           uart_cnt = n;
           break;
         }
       }
     }
-    //만약 시작 문자와 끝문자가 검출되면 start_char_flag = 1
+    //만약 시작 문자와 끝문자 그리고 클러스터 지정 문자가 검출되면 start_char_flag = 1
     if (start_char_flag == 1)
     {
       start_char_flag = 0;
@@ -174,6 +183,106 @@ int main(void)
           // printf("Test MI \r\n");
           // HAL_GPIO_WritePin(GPIOE, 0x02, GPIO_PIN_SET);
           HAL_GPIO_TogglePin(GPIOE, 0xFF);
+          // T 다음에 오는 숫자는?
+          if (UART_RX_temp[3] > '9')
+          {
+            TX_SEL = (UART_RX_temp[3] - 55);
+          }
+          else
+          {
+            TX_SEL = (UART_RX_temp[3] - 48);
+          }
+          printf("Tx Code : %d \r\n", TX_SEL);
+          // R 다음에 오는 출력 신호는 ?
+          if (UART_RX_temp[5] > '9')
+          {
+            RX_ADDR = (UART_RX_temp[5] - 55);
+          }
+          else
+          {
+            RX_ADDR = (UART_RX_temp[5] - 48);
+          }
+          printf("Rx ADDR : %d \r\n", RX_ADDR);
+          //그 다음에 오는 Rx MUX Sel 신호는 ?
+          if (UART_RX_temp[6] > '9')
+          {
+            RX_SEL = (UART_RX_temp[6] - 55);
+          }
+          else
+          {
+            RX_SEL = (UART_RX_temp[6] - 48);
+          }
+          printf("Rx SEL : %d \r\n", RX_SEL);
+          ///////////////////////////////
+          GPIO_Reset();
+          HAL_Delay(5);
+          if (TX_SEL > 32)
+          {
+            printf("error : TX_SEL Out Of Range \r\n");
+          }
+          else if (TX_SEL == 32)
+          {
+            //아무것도 하지 않음.
+          }
+          else if ((TX_SEL >= 16) && (TX_SEL < 32))
+          {
+            HAL_GPIO_WritePin(GPIOF, pow(0x01, TX_SEL - 16), GPIO_PIN_SET);
+          }
+          else if (TX_SEL > 0)
+          {
+            printf ("%d^%d= %d \r\n",2,2,1<<TX_SEL);
+            HAL_GPIO_WritePin(GPIOE, 1<<TX_SEL, GPIO_PIN_SET);
+          }
+          else if (TX_SEL == 0)
+          {
+            printf ("%d^%d= %d \r\n",2,2,1<<TX_SEL);
+            HAL_GPIO_WritePin(GPIOE, 0x01, GPIO_PIN_SET);
+          }
+          else
+          {
+            printf("error : TX_SEL Out Of Range \r\n");
+          }
+
+          // RX_ADDR 세팅
+
+          if (RX_ADDR > 16)
+          {
+            printf("error : RX_ADDR Out Of Range \r\n");
+          }
+          else if (RX_ADDR == 16)
+          {
+          }
+          else if (RX_ADDR > 0)
+          {
+            HAL_GPIO_WritePin(GPIOC, pow(0x01, RX_ADDR), GPIO_PIN_SET);
+          }
+          else if (RX_ADDR == 0)
+          {
+            HAL_GPIO_WritePin(GPIOC, 0x01, GPIO_PIN_SET);
+          }
+          else
+          {
+            printf("error : RX_ADDR Out Of Range \r\n");
+          }
+          // RX_MUX 세팅
+          if (RX_SEL == 0)
+          {
+            HAL_GPIO_WritePin(GPIOA, RX_EN_0_Pin , GPIO_PIN_SET);
+          }
+          else if (RX_SEL == 1)
+          {
+            HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin , GPIO_PIN_SET);
+          }
+          else if (RX_SEL == 2)
+          {
+            HAL_GPIO_WritePin(GPIOA, RX_EN_0_Pin | RX_EN_1_Pin, GPIO_PIN_RESET);
+          }
+          else
+          {
+            printf("error : RX_ADDR Out Of Range \r\n");
+          }
+
+          ///////////////////////////////
           HAL_Delay(5);
           data_flag = 1;
           break;
@@ -189,6 +298,7 @@ int main(void)
           printf("%c", UART_RX_data_word[k]);
         }
       }
+      printf("\r\n");
       data_flag = 0;
     }
     // printf("\r\n");
@@ -503,6 +613,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     // uart_flag = 1;
   }
 }
+void GPIO_Reset()
+{
+  HAL_GPIO_WritePin(GPIOE, TX_MUX_SEL_2_Pin | TX_MUX_SEL_3_Pin | TX_MUX_SEL_4_Pin | TX_MUX_SEL_5_Pin | TX_MUX_SEL_6_Pin | TX_MUX_SEL_7_Pin | TX_MUX_SEL_8_Pin | TX_MUX_SEL_9_Pin | TX_MUX_SEL_10_Pin | TX_MUX_SEL_11_Pin | TX_MUX_SEL_12_Pin | TX_MUX_SEL_13_Pin | TX_MUX_SEL_14_Pin | TX_MUX_SEL_15_Pin | TX_MUX_SEL_0_Pin | TX_MUX_SEL_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, TX_MUX_SEL_16_Pin | TX_MUX_SEL_17_Pin | TX_MUX_SEL_18_Pin | TX_MUX_SEL_19_Pin | TX_MUX_SEL_20_Pin | TX_MUX_SEL_21_Pin | TX_MUX_SEL_22_Pin | TX_MUX_SEL_23_Pin | TX_MUX_SEL_24_Pin | TX_MUX_SEL_25_Pin | TX_MUX_SEL_26_Pin | TX_MUX_SEL_27_Pin | TX_MUX_SEL_28_Pin | TX_MUX_SEL_29_Pin | TX_MUX_SEL_30_Pin | TX_MUX_SEL_31_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, RX_ADDR_0_Pin | RX_ADDR_1_Pin | RX_ADDR_2_Pin | RX_ADDR_3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, RX_EN_0_Pin | RX_EN_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, WR_0_Pin | WR_1_Pin, GPIO_PIN_RESET);
+}
+
 /* USER CODE END 4 */
 
 /**
