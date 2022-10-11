@@ -58,7 +58,7 @@ int cnt = 0;
 char received = '\0';
 char start_char_flag = 0;
 HAL_StatusTypeDef rcvStat;
-
+//한글 주석 실험
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -124,15 +124,7 @@ int main(void)
   printf("0.0.5 Labview Communication Test Labview Parsing Test \r\n");
   printf("0.0.6 Labview Communication Test ARM Parsing Test \r\n");
   printf("0.0.7 ARM Protocol Ver 0.1 \r\n");
-  /* Adding start alphabet - ,
-  because I don't konw. How to tell if the signal is the same as before
-  So i will use start alphabet -
-  Labview   +1T0R000#
-  MCU       +1T0R000# - OK send +1T0R000#
-  Labview   +1T0R000# - X
-  Labview   -1T0R000# - O
-  If you want to send a different signal, change the first character, but you may be confused with the first character sign, so if you have tried to send more than 30 times during the transmission verification process and are not recognized, add an algorithm to change the first character
-  */
+  printf("0.0.8 Command Added \r\n");
   printf("----------------------------------------------------------------- \r\n");
   HAL_GPIO_WritePin(GPIOE, 0x02, GPIO_PIN_RESET);
   /* USER CODE END 2 */
@@ -142,12 +134,13 @@ int main(void)
   while (1)
   {
     HAL_Delay(5);
-    // HAL_Delay(1000);
     printf("System Count : %d end\r\n", cnt++);
-    // printf("%s\r\n", &UART_RX_data);
+    //주기적으로 신호를 보냄으로서 정상 동작 한다는 것을 알림
 
+    // UART 신호 수신
     rcvStat = HAL_UART_Receive(&huart3, UART_RX_data, data_length, 10);
 
+    //받은 데이터 중에 시작 문자와 끝 문자가 있는지 판별
     for (int n = 0; n < data_length; n++)
     {
       if (UART_RX_data[n] == '+')
@@ -162,16 +155,18 @@ int main(void)
         }
       }
     }
+    //만약 시작 문자와 끝문자가 검출되면 start_char_flag = 1
     if (start_char_flag == 1)
     {
       start_char_flag = 0;
       for (int m = 0; m < 8; m++)
       {
         // printf("%c", UART_RX_data[uart_cnt + m]);
+        //데이터를 UART_RX_temp에 옮겨 담는다.
         UART_RX_temp[m] = UART_RX_data[uart_cnt + m];
       }
-      printf("\r\n");
-
+      //이전에 받은 데이터와 비교해서 달라졌으면 실행, 달라지지 않았으면 그대로 간다
+      //아랫 부분이 명령어를 받고 실행하는 부분이다
       for (int n = 0; n < 8; n++)
       {
         if (UART_RX_data_word[n] != UART_RX_temp[n])
@@ -185,6 +180,7 @@ int main(void)
         }
       }
 
+      //비교 기준이 되는 이전 데이터 자리에 현재 데이터를 넣는다
       for (int k = 0; k < 8; k++)
       {
         UART_RX_data_word[k] = UART_RX_temp[k];
@@ -192,7 +188,6 @@ int main(void)
         {
           printf("%c", UART_RX_data_word[k]);
         }
-        
       }
       data_flag = 0;
     }
