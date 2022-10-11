@@ -131,8 +131,9 @@ int main(void)
   printf("0.0.7 ARM Protocol Ver 0.1 \r\n");
   printf("0.0.8 Command Added \r\n");
   printf("0.0.9 Function Added \r\n");
-  printf("0.1.0 Protocal Ver 0.1")
   /*GPIO Reset Fuction 추가*/
+  printf("0.1.0 Protocal Ver 0.1");
+
   printf("----------------------------------------------------------------- \r\n");
   HAL_GPIO_WritePin(GPIOE, 0x02, GPIO_PIN_RESET);
   /* USER CODE END 2 */
@@ -226,16 +227,16 @@ int main(void)
           }
           else if ((TX_SEL >= 16) && (TX_SEL < 32))
           {
-            HAL_GPIO_WritePin(GPIOF, pow(0x01, TX_SEL - 16), GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOF, 1 << (TX_SEL - 16), GPIO_PIN_SET);
           }
           else if (TX_SEL > 0)
           {
-            printf ("%d^%d= %d \r\n",2,2,1<<TX_SEL);
-            HAL_GPIO_WritePin(GPIOE, 1<<TX_SEL, GPIO_PIN_SET);
+
+            HAL_GPIO_WritePin(GPIOE, 1 << TX_SEL, GPIO_PIN_SET);
           }
           else if (TX_SEL == 0)
           {
-            printf ("%d^%d= %d \r\n",2,2,1<<TX_SEL);
+            printf("%d^%d= %d \r\n", 2, 2, 1 << TX_SEL);
             HAL_GPIO_WritePin(GPIOE, 0x01, GPIO_PIN_SET);
           }
           else
@@ -254,7 +255,7 @@ int main(void)
           }
           else if (RX_ADDR > 0)
           {
-            HAL_GPIO_WritePin(GPIOC, pow(0x01, RX_ADDR), GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, 1 << RX_ADDR, GPIO_PIN_SET);
           }
           else if (RX_ADDR == 0)
           {
@@ -267,11 +268,11 @@ int main(void)
           // RX_MUX 세팅
           if (RX_SEL == 0)
           {
-            HAL_GPIO_WritePin(GPIOA, RX_EN_0_Pin , GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOA, RX_EN_0_Pin, GPIO_PIN_SET);
           }
           else if (RX_SEL == 1)
           {
-            HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin , GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin, GPIO_PIN_SET);
           }
           else if (RX_SEL == 2)
           {
