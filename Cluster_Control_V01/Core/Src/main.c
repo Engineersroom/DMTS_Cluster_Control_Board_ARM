@@ -142,6 +142,7 @@ int main(void)
   printf("0.1.1 Setting Cluster ID \r\n");
   printf("0.1.2 Setting Chip EN, CS and WR Setting \r\n");
   printf("1.0.0 TX datalenth = 2, so Total data length is 9  \r\n");
+  printf("1.0.1 Ratency improve \r\n");
   printf("----- ------------------------------------------------------------ \r\n");
   HAL_GPIO_WritePin(GPIOE, 0x02, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_SET);
@@ -153,9 +154,9 @@ int main(void)
   int che = 0;
   while (1)
   {
-    HAL_Delay(5);
+    // HAL_Delay(5);
 
-    if (((cnt % 100) == 0))
+    if (((cnt % 1) == 0))
       printf("System Count,SC%d_\r\n", cnt);
     cnt++;
     // 주기적으로 신호를 보냄으로서 정상 동작 한다는 것을 알림
