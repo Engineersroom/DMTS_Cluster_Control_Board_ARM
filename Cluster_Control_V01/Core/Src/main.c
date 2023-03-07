@@ -48,6 +48,13 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 #define data_length 100
+#define Total_Data_Length 9
+#define Data_Terminating_Letter 8
+#define Data_TX_MUX_SEL_1 3
+#define Data_TX_MUX_SEL_2 4
+#define Data_RX_MUX_ADDR 6
+#define Data_RX_MUX_SEL 7
+
 char UART_RX_data[data_length];
 char UART_RX_data_word[8];
 char UART_RX_temp[8];
@@ -134,6 +141,7 @@ int main(void)
   printf("0.1.0 Protocal Ver 0.1 \r\n");
   printf("0.1.1 Setting Cluster ID \r\n");
   printf("0.1.2 Setting Chip EN, CS and WR Setting \r\n");
+  printf("1.0.0 TX datalenth = 2, so Total data length is 9  \r\n");
   printf("----- ------------------------------------------------------------ \r\n");
   HAL_GPIO_WritePin(GPIOE, 0x02, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_SET);
@@ -146,23 +154,43 @@ int main(void)
   while (1)
   {
     HAL_Delay(5);
-    if (( (cnt % 100) == 0))
-      printf("System Count : %d end\r\n", cnt);
+
+    if (((cnt % 100) == 0))
+      printf("System Count,SC%d_\r\n", cnt);
     cnt++;
-    //주기적으로 신호를 보냄으로서 정상 동작 한다는 것을 알림
+    // 주기적으로 신호를 보냄으로서 정상 동작 한다는 것을 알림
 
     // UART 신호 수신
+    for (int i = 0; i < data_length; i++)
+    {
+      UART_RX_data[i] = 0;
+    }
     rcvStat = HAL_UART_Receive(&huart3, UART_RX_data, data_length, 10);
 
-    //받은 데이터 중에 시작 문자와 끝 문자가 있는지 판별
+    // 받은 데이터 중에 시작 문자와 끝 문자가 있는지 판별
+    // 데이터 문자열
+    // 프로토콜
+    //  1 - + : 첫문자
+    //  2 - 1 or 2 : 클러스터 번호 판별 문자
+    //  3 - T : TX
+    //  4 - 0~W : 32개의 sel 신호  + off state
+    //  5 - R : RX
+    //  6 - RX MUX State : 0 ~ F 16 state
+    //  7 - Mux Sel : 0,1,2,3,4
+    //  8 - # : end
     for (int n = 0; n < data_length; n++)
     {
       if (UART_RX_data[n] == '+')
       {
         // printf("Find Start %d \r\n", n);
-        if ((UART_RX_data[n + 7]) == '#')
+        // printf("11111111\r\n");
+        // 프로토콜의
+        if ((UART_RX_data[n + 8]) == '#')
         {
-          if (UART_RX_data[n + 1] == '1') // 아이디 판별 식
+          if (UART_RX_data[n + 1] == '1')
+          // HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+
+          // 아이디 판별 식
           {
             start_char_flag = 1;
           }
@@ -170,18 +198,22 @@ int main(void)
           break;
         }
       }
+      else
+      {
+        // printf("AAAAAAAA\r\n");
+      }
     }
-    if (start_char_flag == 1) //만약 시작 문자와 끝문자 그리고 클러스터 지정 문자가 검출되면 start_char_flag = 1
+    if (start_char_flag == 1) // 만약 시작 문자와 끝문자 그리고 클러스터 지정 문자가 검출되면 start_char_flag = 1
     {
       start_char_flag = 0;
-      for (int m = 0; m < 8; m++)
+      for (int m = 0; m < Total_Data_Length; m++)
       {
 
         UART_RX_temp[m] = UART_RX_data[uart_cnt + m];
       }
-      //이전에 받은 데이터와 비교해서 달라졌으면 실행, 달라지지 않았으면 그대로 간다
-      //아랫 부분이 명령어를 받고 실행하는 부분이다
-      for (int n = 0; n < 8; n++)
+      // 이전에 받은 데이터와 비교해서 달라졌으면 실행, 달라지지 않았으면 그대로 간다
+      // 아랫 부분이 명령어를 받고 실행하는 부분이다
+      for (int n = 0; n < Total_Data_Length; n++)
       {
         if (UART_RX_data_word[n] != UART_RX_temp[n])
         {
@@ -190,37 +222,49 @@ int main(void)
           // HAL_GPIO_TogglePin(GPIOE, 0xFF);
           // T 다음에 오는 숫자는?
           //////////////////////////TX Code/////////////////////////////////
-          if (UART_RX_temp[3] > '9')
+          // 아스키 코드상 9 : 57  A : 65
+          // 따라서 9 이하인 경우 48을 빼주면 원래 숫자가 되고
+          //  A 이상인 경우 55를 빼주면 원래 숫자가 된다
+          if (UART_RX_temp[Data_TX_MUX_SEL_1] > '9')
           {
-            TX_SEL = (UART_RX_temp[3] - 55);
+            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_1] - 55);
           }
           else
           {
-            TX_SEL = (UART_RX_temp[3] - 48);
+            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_1] - 48);
           }
-          printf("Tx Code : %d \r\n", TX_SEL);
+          if (UART_RX_temp[Data_TX_MUX_SEL_2] > '9')
+          {
+            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_2] - 55);
+          }
+          else
+          {
+            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_2] - 48);
+          }
+          printf("\r\nTx Code : %c %c \r\n", UART_RX_temp[Data_TX_MUX_SEL_1], UART_RX_temp[Data_TX_MUX_SEL_2]);
 
           // R 다음에 오는 출력 신호는 ?
           //////////////////////////RX Code //////////////////////////////
-          if (UART_RX_temp[5] > '9')
+          if (UART_RX_temp[Data_RX_MUX_ADDR] > '9')
           {
-            RX_ADDR = (UART_RX_temp[5] - 55);
+            RX_ADDR = (UART_RX_temp[Data_RX_MUX_ADDR] - 55);
           }
           else
           {
-            RX_ADDR = (UART_RX_temp[5] - 48);
+            RX_ADDR = (UART_RX_temp[Data_RX_MUX_ADDR] - 48);
           }
           printf("Rx ADDR : %d \r\n", RX_ADDR);
-          //그 다음에 오는 Rx MUX Sel 신호는 ?
-          if (UART_RX_temp[6] > '9')
+          // 그 다음에 오는 Rx MUX Sel 신호는 ?
+          if (UART_RX_temp[Data_RX_MUX_SEL] > '9')
           {
-            RX_SEL = (UART_RX_temp[6] - 55);
+            RX_SEL = (UART_RX_temp[Data_RX_MUX_SEL] - 55);
           }
           else
           {
-            RX_SEL = (UART_RX_temp[6] - 48);
+            RX_SEL = (UART_RX_temp[Data_RX_MUX_SEL] - 48);
           }
           printf("Rx SEL : %d \r\n", RX_SEL);
+
           ///////////////////////////////
           GPIO_Reset();
 
@@ -228,17 +272,19 @@ int main(void)
           HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_RESET);
           HAL_Delay(5);
           HAL_GPIO_WritePin(GPIOD, WR_0_Pin | WR_1_Pin, GPIO_PIN_RESET);
-          HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin |RX_EN_0_Pin, GPIO_PIN_SET);
+          HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin | RX_EN_0_Pin, GPIO_PIN_SET);
           HAL_Delay(5);
+
+          HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 
           ///////////////////////////////////////////명령어 실행 파트////////////////////////////////////////////
           if (TX_SEL > 32)
           {
             printf("error : TX_SEL Out Of Range \r\n");
           }
-          else if (TX_SEL == 32) //W 입력 받았을 경우
+          else if (TX_SEL == 32) // W 입력 받았을 경우
           {
-            //아무것도 하지 않음.
+            // 아무것도 하지 않음.
           }
           else if ((TX_SEL >= 16) && (TX_SEL < 32))
           {
@@ -251,7 +297,7 @@ int main(void)
           }
           else if (TX_SEL == 0)
           {
-            //printf("%d^%d= %d \r\n", 2, 2, 1 << TX_SEL);
+            // printf("%d^%d= %d \r\n", 2, 2, 1 << TX_SEL);
             HAL_GPIO_WritePin(GPIOE, 0x01, GPIO_PIN_SET);
           }
           else
@@ -267,7 +313,7 @@ int main(void)
           }
           else if (RX_ADDR == 16)
           {
-            //아무것도 하지 않음 전부 OFF GPIO Reset에서 전부 0으로 만들어주기 때문 
+            // 아무것도 하지 않음 전부 OFF GPIO Reset에서 전부 0으로 만들어주기 때문
           }
           else if (RX_ADDR > 0)
           {
@@ -275,7 +321,7 @@ int main(void)
           }
           else if (RX_ADDR == 0)
           {
-            HAL_GPIO_WritePin(GPIOC, 0 , GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, 0, GPIO_PIN_SET);
           }
           else
           {
@@ -306,16 +352,22 @@ int main(void)
         }
       }
 
-      //비교 기준이 되는 이전 데이터 자리에 현재 데이터를 넣는다
-      for (int k = 0; k < 8; k++)
+      // 비교 기준이 되는 이전 데이터 자리에 현재 데이터를 넣는다
+      for (int k = 0; k < Total_Data_Length; k++)
       {
         UART_RX_data_word[k] = UART_RX_temp[k];
         if (data_flag == 1)
         {
-          printf("%c", UART_RX_data_word[k]);
+          if (k == 8)
+          {
+
+            printf("#");
+          }
+          else
+            printf("%c", UART_RX_data_word[k]);
         }
       }
-      printf("\r\n");
+      // printf("\r\n");
       data_flag = 0;
     }
   }
