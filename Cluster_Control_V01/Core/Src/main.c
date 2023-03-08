@@ -269,12 +269,12 @@ int main(void)
           ///////////////////////////////
           GPIO_Reset();
 
-          HAL_Delay(5);
+          // HAL_Delay(1);
           HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_RESET);
-          HAL_Delay(5);
+          // HAL_Delay(1);
           HAL_GPIO_WritePin(GPIOD, WR_0_Pin | WR_1_Pin, GPIO_PIN_RESET);
           HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin | RX_EN_0_Pin, GPIO_PIN_SET);
-          HAL_Delay(5);
+          // HAL_Delay(1);
 
           HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 
@@ -347,7 +347,7 @@ int main(void)
           }
 
           ///////////////////////////////
-          HAL_Delay(5);
+
           data_flag = 1;
           break;
         }
