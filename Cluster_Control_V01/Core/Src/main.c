@@ -66,6 +66,8 @@ int cnt = 0;
 char received = '\0';
 char start_char_flag = 0;
 char TX_SEL = 0;
+char TX_SEL1 = 0;
+char TX_SEL2 = 0;
 char RX_ADDR = 0;
 char RX_SEL = 0;
 
@@ -228,20 +230,21 @@ int main(void)
           //  A 이상인 경우 55를 빼주면 원래 숫자가 된다
           if (UART_RX_temp[Data_TX_MUX_SEL_1] > '9')
           {
-            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_1] - 55);
+            TX_SEL1 = (UART_RX_temp[Data_TX_MUX_SEL_1] - 55);
           }
           else
           {
-            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_1] - 48);
+            TX_SEL1 = (UART_RX_temp[Data_TX_MUX_SEL_1] - 48);
           }
           if (UART_RX_temp[Data_TX_MUX_SEL_2] > '9')
           {
-            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_2] - 55);
+            TX_SEL2 = (UART_RX_temp[Data_TX_MUX_SEL_2] - 55);
           }
           else
           {
-            TX_SEL = (UART_RX_temp[Data_TX_MUX_SEL_2] - 48);
+            TX_SEL2 = (UART_RX_temp[Data_TX_MUX_SEL_2] - 48);
           }
+          TX_SEL = TX_SEL1 + TX_SEL2;
           printf("\r\nTx Code : %c %c \r\n", UART_RX_temp[Data_TX_MUX_SEL_1], UART_RX_temp[Data_TX_MUX_SEL_2]);
 
           // R 다음에 오는 출력 신호는 ?
@@ -268,15 +271,12 @@ int main(void)
 
           ///////////////////////////////
           GPIO_Reset();
-
-          // HAL_Delay(1);
-          HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_RESET);
-          // HAL_Delay(1);
-          HAL_GPIO_WritePin(GPIOD, WR_0_Pin | WR_1_Pin, GPIO_PIN_RESET);
-          HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin | RX_EN_0_Pin, GPIO_PIN_SET);
-          // HAL_Delay(1);
-
           HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+
+          // RX MUX Setting
+          HAL_GPIO_WritePin(GPIOG, CSA_Pin | CSB_Pin, GPIO_PIN_SET);
+          HAL_GPIO_WritePin(GPIOD, WR_0_Pin | WR_1_Pin, GPIO_PIN_SET);
+          HAL_GPIO_WritePin(GPIOA, RX_EN_1_Pin | RX_EN_0_Pin, GPIO_PIN_SET);
 
           ///////////////////////////////////////////명령어 실행 파트////////////////////////////////////////////
           if (TX_SEL > 32)
@@ -285,10 +285,11 @@ int main(void)
           }
           else if (TX_SEL == 32) // W 입력 받았을 경우
           {
-            // 아무것도 하지 않음.
+            // 아무것도 하지 않음
           }
           else if ((TX_SEL >= 16) && (TX_SEL < 32))
           {
+
             HAL_GPIO_WritePin(GPIOF, 1 << (TX_SEL - 16), GPIO_PIN_SET);
           }
           else if (TX_SEL > 0)
