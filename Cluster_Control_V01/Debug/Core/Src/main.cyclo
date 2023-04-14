@@ -1,0 +1,10 @@
+main.c:90:5:__io_putchar	1
+main.c:102:5:main	10
+main.c:222:6:SystemClock_Config	3
+main.c:267:13:MX_SPI1_Init	2
+main.c:304:13:MX_USART3_UART_Init	2
+main.c:336:13:MX_USB_OTG_FS_PCD_Init	2
+main.c:370:13:MX_GPIO_Init	1
+main.c:475:6:HAL_UART_RxCpltCallback	1
+main.c:485:6:GPIO_Reset	1
+main.c:501:6:Error_Handler	1
